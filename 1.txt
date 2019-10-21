@@ -1,0 +1,575 @@
+#include <stdio.h>
+#include "account.h"
+#include <stdlib.h>
+#include <windows.h>
+#include <conio.h> 
+
+struct account a[10];  //保存账户信息
+int g_accountNum;  //系统中账户数量
+struct account g_loginUser;//当前登陆的账户
+void saveinfo();
+int now;//定义当前是第几个用户账户
+int lang;//语言 
+int system(const char *string);//清屏 
+
+void init()
+{
+	FILE * p = fopen("atm.txt","r");
+
+	if(p ==NULL)
+	{
+	//	printf("打开文件失败\n");
+		return;
+	}
+	else
+	{
+	//	printf("打开文件成功\n");
+	}
+
+//	printf("             数据加载中.......\n");
+	int i = 0;
+	while(feof(p)==0)  //feof(p) 判断文件是否结束：返回值0，表示文件没结束，否则结束
+	{
+		fscanf(p,"id:%d 账户:%s 密码:%d 余额:%f\n",&a[i].id,a[i].name,&a[i].password,&a[i].balance); //读取文件信息
+	//	printf("读取到的信息:id:%d 账号:%s 密码:%d 余额:%f\n",a[i].id,a[i].name,a[i].password,a[i].balance); //打印变量信息
+		i++;
+	}
+
+	g_accountNum = i;
+}
+
+//在系统中查找输入的卡号:返回值为-1,表示没有查找到，返回值为其他，表示id所在的位置
+int searchId(int kahao)
+{
+	int ret = -1;
+
+	for(int i = 0 ;i < g_accountNum;i++)	
+	{
+		if(kahao == a[i].id)
+		{
+			g_loginUser = a[i];
+			ret = i;
+			//printf("当前i值为%d",i);
+			break;
+		}
+	
+	}
+
+	return ret;
+}
+
+//查找当前账户的密码和输入的密码是否正确：返回值为0，表示密码输入错误，否则成功。
+int checkPassword()
+{
+	if(lang==1)
+	{
+	int ret = 0;
+	int pw;
+	
+	printf("Please input your password:");
+	scanf("%d",& pw);
+
+	for( int j= 0;j<2;j++)//bug修复:修复了第三次输入密码后，即使密码输入正确，依然报错的bug 在else里添加对pw == g_loginUser.password的判断
+	{
+		if(pw == g_loginUser.password)
+		{
+			ret = 1;
+			break;
+		}
+		else
+		{
+			printf("Please input your password again:");
+			scanf("%d",& pw);//出现bug原因，在最后一次输入密码后，值虽然存入了pw里，但判断是在else之前，结束循环后直接返回ret值，此时ret值还未被修改
+			if(pw == g_loginUser.password)
+			{
+				ret = 1;
+				break;
+			}
+		}
+	}
+	return ret;
+    }
+	
+	if(lang==2)
+	{
+	int ret = 0;
+	int pw;
+	
+	printf("请输入密码:");
+	scanf("%d",& pw);
+
+	for( int j= 0;j<2;j++)//bug修复:修复了第三次输入密码后，即使密码输入正确，依然报错的bug 在else里添加对pw == g_loginUser.password的判断
+	{
+		if(pw == g_loginUser.password)
+		{
+			ret = 1;
+			break;
+		}
+		else
+		{
+			printf("请再次输入密码:");
+			scanf("%d",& pw);//出现bug原因，在最后一次输入密码后，值虽然存入了pw里，但判断是在else之前，结束循环后直接返回ret值，此时ret值还未被修改
+			if(pw == g_loginUser.password)
+			{
+				ret = 1;
+				break;
+			}
+		}
+	}
+	return ret;
+	}
+}
+
+int login()
+{
+	int ret = 0;
+	int num;
+	int times= 0;
+
+	printf("    Welcome to Red River Bank！\n");
+	printf("   Please choose your language!\n");
+	printf(">1< English\t>2< Simple Chinese\n");
+	scanf("%d",&lang);
+	system("cls");
+	if(lang==1)
+	{
+	printf("Please enter your card number:");
+	scanf("%d",& num);
+	
+	 if(-1!=searchId(num)) //检查卡号
+	{
+		now=searchId(num);
+		printf("Card number recognition success!\n");
+		
+		if(checkPassword() == 1) ret = 1;//检查密码
+		else printf("Password input is too frequent. Please take back the card and try again later.\n");
+	}
+	 else
+		printf("Invalid card\n");
+	system("cls");
+	return ret;
+	}
+	if(lang==2)
+	{
+	printf("请输入卡号:");
+	scanf("%d",& num);
+	
+	 if(searchId(num)!=-1) //检查卡号
+	{
+		now=searchId(num);
+		printf("卡号识别成功!\n");
+		
+		if(checkPassword() == 1) ret = 1;//检查密码
+		else
+		{
+			printf("密码输入次数过多，请取回卡片，稍后再尝试。\n");
+		}
+	}
+	 else
+		printf("无效卡\n");
+	
+	system("cls");
+	return ret;
+	}
+}
+
+void welcom()
+{
+	if(lang==1)
+	{
+	printf("\n\n\n\n\n\t  Red Driver bank system\t\n\n");
+	printf("\t>1< Withdraw\t>2< Transfer\n\n");
+	printf("\t>3< Modify the password\n\n\t>4< Inquire\n\n");
+	printf("\t>5< Sign out\n\n\n\n\n");
+
+	}
+	
+	if(lang==2)
+	{
+	printf("\n\n\n\n\n\t      赤川银行系统\t\n\n");
+	printf("\t>1< 取款\t>2< 转账\n\n");
+	printf("\t>3< 改密\t>4< 查询\n\n");
+	printf("\t>5< 取卡\n\n\n\n\n");
+	}
+}
+
+void withDraw()
+{
+	if(lang==1)
+	{
+	printf("Withdraw money.......\n");
+	printf("Please enter the amount of withdrawals:");
+
+	int moneyNum;//此处结合实际改为int型，取钱只能取出100的整数
+	scanf("%d",&moneyNum);
+
+	if(moneyNum>a[now].balance)printf("Sorry, your current account balance is not enough.\n");
+	else
+	{
+		if(moneyNum<=100000)
+		{
+			if(moneyNum%100==0)
+			{		
+					a[now].balance-=moneyNum;
+					printf("Your current account balance:%f\n",a[now].balance);
+			}
+			else
+			{
+				printf("Sorry, the amount of money can only be a multiple of one hundred.\n");
+			}
+		}
+		else printf("Sorry, Red River bank's non VIP users can get a maximum of 100000 RMB per time.\n");
+	}
+	}
+	
+	if(lang==2)
+	{
+	printf("取款中.......\n");
+	printf("请输入取款金额:");
+
+	int moneyNum;//此处结合实际改为int型，取钱只能取出100的整数
+	scanf("%d",&moneyNum);
+
+	if(moneyNum>a[now].balance)printf("抱歉，您当前的账户余额不足。\n");
+	else
+	{
+		if(moneyNum<=100000)
+		{
+			if(moneyNum%100==0)
+			{		
+					a[now].balance-=moneyNum;
+					printf("您目前账户余额为:%f\n",a[now].balance);
+			}
+			else
+			{
+				printf("很抱歉，取款金额只能是100的整数值\n");
+			}
+		}
+		else printf("抱歉，赤川银行非VIP用户一次最高可取100000人民币\n");
+	}
+	}
+}
+
+void transfer()
+{
+	if(lang==1)
+	{
+	printf("Transfer.......\n");
+	printf("Please enter the target card number:");
+
+	int id;
+	float moneyNum;
+	scanf("%d",&id);
+	if(id == g_loginUser.id)
+	{
+		printf("Can't send money to yourself'\n");
+		return;
+	}
+
+	int pos = searchId(id);  //需要查找对方账号是否存在
+	if(-1!= pos)
+	{
+		printf("Please enter the amount to be turned out\n");
+		scanf("%f",&moneyNum);
+		if(moneyNum>a[now].balance)printf("Sorry, your current account balance is not enough.\n");
+		else
+		{
+			a[now].balance-=moneyNum;
+			a[pos].balance+=moneyNum;
+			printf("You have transferred the %f account to the %d account, and your current account balance is%f\n",a[pos].id,moneyNum,a[now].balance);
+		}
+	}
+	else
+		printf("The number is wrong\n");
+	}
+	
+	if(lang==2)
+	{
+	printf("转账中.......\n");
+	printf("请输入对方卡号:");
+
+	int id;
+	float moneyNum;
+	scanf("%d",&id);
+	if(id == g_loginUser.id)
+	{
+		printf("不能转给自己\n");
+		return;
+	}
+
+	int pos = searchId(id);  //需要查找对方账号是否存在
+	if(-1!= pos)
+	{
+		printf("请输入要转出的金额\n");
+		scanf("%f",&moneyNum);
+		if(moneyNum>a[now].balance)printf("抱歉，您当前的账户余额不足。\n");
+		else
+		{
+			a[now].balance-=moneyNum;
+			a[pos].balance+=moneyNum;
+			printf("您已向%d账户中转入%f元，您当前账户余额为%f\n",a[pos].id,moneyNum,a[now].balance);
+		}
+	}
+	else
+		printf("输入的卡号有问题\n");
+	}
+}
+int mainMenu()
+{
+
+	if(lang==1)
+	{
+	
+	int changePassword();
+	int i = 1; //结束循环判断值 
+	while(i)
+	{
+		system("cls");
+		welcom();
+
+		printf("Please choose the service what you need\n");
+		int service;
+		scanf("%d",&service);
+
+		switch(service)
+		{
+			case 1:
+				system("cls");
+				withDraw(); //取款
+				printf("Enter any character to continue."); 
+				getch(); 
+				break;
+			case 2:
+				system("cls");
+				transfer();//转账 
+				printf("Enter any character to continue.");
+				getch();
+				break;
+			case 3:
+				system("cls");
+				changePassword();//改密 
+				printf("Enter any character to continue.");
+				getch();
+				break;
+			case 4:
+				system("cls");
+				printf("id:%d\nAccount:%s\nBalance:%f\n",a[now].id,a[now].name,a[now].balance);
+				printf("Enter any character to continue.");
+				getch();
+				break;
+			case 5:
+				system("cls");
+				printf("Please take back the card\n");
+				i = 0; 
+				break;
+			default:
+				system("cls");
+				printf("No option XD\n");
+				printf("Enter any character to continue.");
+				getch();
+		}
+	}
+	}
+	
+	if(lang==2)
+	{
+	
+	int changePassword();
+	int i = 1; //结束循环判断值 
+	while(i)
+	{
+		system("cls");
+		welcom();
+
+		printf("请选择所需的服务\n");
+		int service;
+		scanf("%d",&service);
+
+		switch(service)
+		{
+			case 1:
+				system("cls");
+				withDraw(); //取款
+				printf("键入任何按键以继续操作..."); 
+				getch(); 
+				break;
+			case 2:
+				system("cls");
+				transfer();//转账 
+				printf("键入任何按键以继续操作..."); 
+				getch(); 
+				break;
+			case 3:
+				system("cls");
+				changePassword();//改密 
+				printf("键入任何按键以继续操作..."); 
+				getch(); 
+				break;
+			case 4:
+				system("cls");
+				printf("id:%d\n账户:%s\n余额:%f\n",a[now].id,a[now].name,a[now].balance);
+				printf("键入任何按键以继续操作...");
+				getch();
+				break;
+			case 5:
+				system("cls");
+				printf("请取回卡片\n");
+				i = 0; 
+				break;
+			default:
+				system("cls");
+				printf("没有此选项\n");
+				printf("键入任何按键以继续操作...");
+				getch();
+		}
+	}
+	}
+	return 0;
+
+}
+
+//把所有账户信息保存到文件中
+void saveinfo()
+{
+	FILE * p = fopen("atm.txt","w");
+
+	if(p==NULL&&lang==1)
+	{
+		printf("There is an unknown error, please contact the bank staff for operationXD\n");
+		return;
+	}
+	if(p==NULL&&lang==2)
+	{
+		printf("发生未知错误，请联系银行工作人员进行操作XD\n");
+		return;
+	}
+
+	int i = 0;
+	for(;i<g_accountNum;i++)
+		fprintf(p,"id:%d 账户:%s 密码:%d 余额:%f\n",a[i].id,a[i].name,a[i].password,a[i].balance);
+}
+
+void changePassword()//改密 
+{
+	if(lang==1)
+	{ 
+	int checkPassword2(int pw);
+	int nowpassword=0;//传参 
+	int fnpassword1=0;//新密码1 
+	int fnpassword2=0;//新密码2 
+	printf("Please enter your current password\n");
+	scanf("%d",&nowpassword);
+	if(0!=checkPassword2(nowpassword))
+	{
+		printf("Please enter a new password\n");
+		scanf("%d",&fnpassword1);
+		if(fnpassword1>999999||fnpassword1<100000)
+		{
+			printf("The password is six digits, and your input does not conform to the specification！\n");
+			return;
+		}
+		else
+		{
+			printf("Please enter a new password again\n");
+			scanf("%d",&fnpassword2);
+			if(fnpassword2>999999||fnpassword2<100000)
+			{
+				printf("Your input does not conform to the specification.\n");
+				return;
+			}
+			if(fnpassword1==fnpassword2)
+			{
+				a[now].password=fnpassword2;
+				printf("Password modification is successful!\n");
+			} 
+			else printf("The new password for the two input is not consistent, please try again!\n"); 
+		}
+	}
+	else
+	{
+		printf("Wrong password!\n");
+		return; 
+	}
+	} 
+	
+	if(lang==2)
+	{ 
+	int checkPassword2(int pw);
+	int nowpassword=0;//传参 
+	int fnpassword1=0;//新密码1 
+	int fnpassword2=0;//新密码2 
+	printf("请输入您当前的密码\n");
+	scanf("%d",&nowpassword);
+	if(0!=checkPassword2(nowpassword))
+	{
+		printf("请输入新密码\n");
+		scanf("%d",&fnpassword1);
+		if(fnpassword1>999999||fnpassword1<100000)
+		{
+			printf("密码为六位数字，您的输入不符合规范!\n");
+			return;
+		}
+		else
+		{
+			printf("请再次输入新密码\n");
+			scanf("%d",&fnpassword2);
+			if(fnpassword2>999999||fnpassword2<100000)
+			{
+				printf("您的输入不符合规范!\n");
+				return;
+			}
+			if(fnpassword1==fnpassword2)
+			{
+				a[now].password=fnpassword2;
+				printf("密码修改成功！\n");
+			} 
+			else printf("两次输入的新密码不一致，请重试！\n"); 
+		}
+	}
+	else
+	{
+		printf("您输入的密码错误！\n");
+		return; 
+	}
+	} 
+}
+
+int checkPassword2(int pw)//判断密码是否正确，无循环 
+{
+	int ret = 0;
+
+	if(pw == g_loginUser.password)
+	{
+		ret = 1;
+	}
+	return ret;
+}
+
+
+int main()
+{
+	system("color 1F");
+	init();
+	if(login()==1) //登陆成功
+	{
+		mainMenu();
+		saveinfo();
+		//saveinfo();此处老师给的原版有bug，在mainMenu()函数执行到5时，return会结束程序，并不会执行到saveinfo()，这就导致信息无法在txt文档中更新
+		
+	}
+	else
+	{
+		if(lang==2)printf("登陆失败\n");
+		else if(lang==1)printf("Login fail.\n");
+	}
+
+	return 0;
+}
+//
+struct account
+{
+	int id;
+	char name[20];
+	int password;
+	float balance;
+};
